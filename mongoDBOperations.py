@@ -1,7 +1,9 @@
 import pymongo
 import pandas as pd
 import json
+from logger_class import getLog
 
+logger = getLog('flipkart.py')
 
 class MongoDBManagement:
 
@@ -16,6 +18,7 @@ class MongoDBManagement:
                 self.username, self.password)
             # self.url = 'localhost:27017'
         except Exception as e:
+            logger.error("MongoDB connection error")
             raise Exception(f"(__init__): Something went wrong on initiation process\n" + str(e))
 
     def getMongoDBClientObject(self):
@@ -26,6 +29,7 @@ class MongoDBManagement:
             mongo_client = pymongo.MongoClient(self.url)
             return mongo_client
         except Exception as e:
+            logger.error("Something went wrong on creation of client object of mongoDB")
             raise Exception("(getMongoDBClientObject): Something went wrong on creation of client object\n" + str(e))
 
     def closeMongoDBconnection(self, mongo_client):
@@ -36,6 +40,7 @@ class MongoDBManagement:
         try:
             mongo_client.close()
         except Exception as e:
+            logger.error("Something went wrong on closing connection")
             raise Exception(f"Something went wrong on closing connection\n" + str(e))
 
     def isDatabasePresent(self, db_name):
@@ -53,6 +58,7 @@ class MongoDBManagement:
                 mongo_client.close()
                 return False
         except Exception as e:
+            logger.error("Failed on checking if the database is present or not")
             raise Exception("(isDatabasePresent): Failed on checking if the database is present or not \n" + str(e))
 
     def createDatabase(self, db_name):
@@ -74,6 +80,7 @@ class MongoDBManagement:
                 mongo_client.close()
                 return database
         except Exception as e:
+            logger.error("Failed on creating database")
             raise Exception(f"(createDatabase): Failed on creating database\n" + str(e))
 
     def dropDatabase(self, db_name):
@@ -89,6 +96,7 @@ class MongoDBManagement:
                 mongo_client.close()
                 return True
         except Exception as e:
+            logger.error("Failed to delete database")
             raise Exception(f"(dropDatabase): Failed to delete database {db_name}\n" + str(e))
 
     def getDatabase(self, db_name):
@@ -100,6 +108,7 @@ class MongoDBManagement:
             mongo_client.close()
             return mongo_client[db_name]
         except Exception as e:
+            logger.error("Failed to get the database list")
             raise Exception(f"(getDatabase): Failed to get the database list")
 
     def getCollection(self, collection_name, db_name):
@@ -112,6 +121,26 @@ class MongoDBManagement:
             return database[collection_name]
         except Exception as e:
             raise Exception(f"(getCollection): Failed to get the database list.")
+
+    def getCollectionsList(self, db_name):
+        try:
+            database = self.getDatabase(db_name)
+            collections = database.list_collection_names()
+            return collections
+        except Exception as e:
+            raise Exception(f"(getCollection): Failed to get the connection list.")
+
+    def getDocumentCount(self, db_name):
+        try:
+            # Retrieve document count for each collection
+            document_counts = []
+            for collection_name in self.getCollectionsList(db_name=db_name):
+                collection = self.getDatabase(db_name)[collection_name]
+                count = collection.count_documents({})
+                document_counts.append(count)
+            return document_counts
+        except Exception as e:
+            raise Exception(f"(getCollection): Failed to get the document count.")
 
     def isCollectionPresent(self, collection_name, db_name):
         """

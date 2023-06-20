@@ -99,13 +99,11 @@ class ObjectRepository:
         return total_page_1
 
 
-
-#
     def getMoreReviewUsingClass(self):
         more_review_1 = "_3at_-o"
         more_review_2 = "_3UAT2v"
         return more_review_1, more_review_2
-#
+
     def getNextFromTotalReviewPage(self):
         next_button = "_1LKTO3"
         return next_button

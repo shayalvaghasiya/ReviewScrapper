@@ -1,17 +1,16 @@
 # doing necessary imports
 import threading
-import io
-from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
-from matplotlib.figure import Figure
 
+import mongoDBOperations
 from logger_class import getLog
-from flask import Flask, render_template, request, jsonify, Response, url_for, redirect
-from flask_cors import CORS, cross_origin
+from flask import Flask, render_template, request, Response, url_for, redirect
+from flask_cors import cross_origin
 import pandas as pd
 from mongoDBOperations import MongoDBManagement
 from FlipkartScrapping import FlipkartScrapper
 from selenium import webdriver
 from webdriver_manager.chrome import ChromeDriverManager
+import graphs
 
 rows = {}
 collection_name = None
@@ -23,13 +22,14 @@ db_name = 'Flipkart-Scrapper'
 
 app = Flask(__name__)  # initialising the flask app with the name 'app'
 
-#For selenium driver implementation on heroku
+# For selenium driver implementation on heroku
 chrome_options = webdriver.ChromeOptions()
 chrome_options.add_argument('--disable-gpu')
 chrome_options.add_argument('--no-sandbox')
 chrome_options.add_argument("disable-dev-shm-usage")
 
-#To avoid the time out issue on heroku
+
+# To avoid the time out issue on heroku
 class threadClass:
 
     def __init__(self, expected_review, searchString, scrapper_object, review_count):
@@ -45,7 +45,8 @@ class threadClass:
         global collection_name, free_status
         free_status = False
         collection_name = self.scrapper_object.getReviewsToDisplay(expected_review=self.expected_review,
-                                                                   searchString=self.searchString, username='shayalvaghasiya',
+                                                                   searchString=self.searchString,
+                                                                   username='shayalvaghasiya',
                                                                    password='shayalvaghasiya',
                                                                    review_count=self.review_count)
         logger.info("Thread run completed")
@@ -77,25 +78,31 @@ def index():
             logger.info(f"Search begins for {searchString}")
             if mongoClient.isCollectionPresent(collection_name=searchString, db_name=db_name):
                 response = mongoClient.findAllRecords(db_name=db_name, collection_name=searchString)
+                logger.info("Collection is already present")
                 reviews = [i for i in response]
                 if len(reviews) > expected_review:
                     result = [reviews[i] for i in range(0, expected_review)]
+                    logger.info("Result fetched from already present collection")
                     scrapper_object.saveDataFrameToFile(file_name="static/scrapper_data.csv",
                                                         dataframe=pd.DataFrame(result))
                     logger.info("Data saved in scrapper file")
+                    scrapper_object.close_tab()
                     return render_template('results.html', rows=result)  # show the results to user
                 else:
                     review_count = len(reviews)
                     threadClass(expected_review=expected_review, searchString=searchString,
                                 scrapper_object=scrapper_object, review_count=review_count)
                     logger.info("data saved in scrapper file")
+                    scrapper_object.close_tab()
                     return redirect(url_for('feedback'))
             else:
                 threadClass(expected_review=expected_review, searchString=searchString, scrapper_object=scrapper_object,
                             review_count=review_count)
+                scrapper_object.close_tab()
                 return redirect(url_for('feedback'))
 
         except Exception as e:
+            logger.error("Something went wrong while rendering all the details of product")
             raise Exception("(app.py) - Something went wrong while rendering all the details of product.\n" + str(e))
 
     else:
@@ -120,32 +127,35 @@ def feedback():
         else:
             return render_template('results.html', rows=None)
     except Exception as e:
+        logger.error("Something went wrong on retrieving feedback.")
         raise Exception("(feedback) - Something went wrong on retrieving feedback.\n" + str(e))
 
 
 @app.route("/graph", methods=['GET'])
 @cross_origin()
 def graph():
-    return redirect(url_for('plot_png'))
+    fig = graphs.ProductReviewCountGraph()
+    logger.info("graph generated")
+    graph_json = fig.to_json()
+    return render_template('graphs.html', graph_json=graph_json)
 
 
-@app.route('/a', methods=['GET'])
-def plot_png():
-    fig = create_figure()
-    output = io.BytesIO()
-    FigureCanvas(fig).print_png(output)
-    return Response(output.getvalue(), mimetype='image/png')
+@app.route('/piegraph', methods=['GET', 'POST'])
+@cross_origin()
+def pie():
+    # Connect to MongoDB server
+    mongoClient = MongoDBManagement(username='shayalvaghasiya', password='shayalvaghasiya')
+    database = mongoClient.getDatabase(db_name=db_name)
+    # Get list of collections in the database
+    collections = database.list_collection_names()
+    return render_template('piegraph.html', collections=collections)
 
+@app.route('/piechart/<collection_name>')
+@cross_origin()
+def pie_chart(collection_name):
+    graph_html = graphs.ProductsPieChart(collection_name)
+    return redirect('/' + graph_html)
 
-def create_figure():
-    data = pd.read_csv("static/scrapper_data.csv")
-    dataframe = pd.DataFrame(data=data)
-    fig = Figure()
-    axis = fig.add_subplot(1, 1, 1)
-    xs = dataframe['product_searched']
-    ys = dataframe['rating']
-    axis.scatter(xs, ys)
-    return fig
 
 if __name__ == "__main__":
     app.run()  # running the app on the local machine on port 8000

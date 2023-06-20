@@ -25,6 +25,9 @@ class FlipkartScrapper:
         except Exception as e:
             raise Exception(f"(__init__): Something went wrong on initializing the webdriver object.\n" + str(e))
 
+    def close_tab(self):
+        self.driver.close()
+
     def waitExplicitlyForCondition(self, element_to_be_found):
         """
         This function explicitly for condition to satisfy
@@ -647,3 +650,4 @@ class FlipkartScrapper:
             return search
         except Exception as e:
             raise Exception(f"(getReviewsToDisplay) - Something went wrong on yielding data.\n" + str(e))
+
