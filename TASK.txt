@@ -1,0 +1,6 @@
+Create new logger 
+make changes in UI
+Generate Graphs based on results -> product based graphs
+				-> 1) products, review count graph
+				-> 2) for one product , review stats
+				-> 3) deploy (heroku, aws, azure)
