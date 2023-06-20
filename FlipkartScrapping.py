@@ -13,7 +13,7 @@ import pandas as pd
 from mongoDBOperations import MongoDBManagement
 
 
-class FlipkratScrapper:
+class FlipkartScrapper:
 
     def __init__(self, executable_path, chrome_options):
         """

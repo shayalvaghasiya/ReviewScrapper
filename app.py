@@ -9,14 +9,14 @@ from flask import Flask, render_template, request, jsonify, Response, url_for, r
 from flask_cors import CORS, cross_origin
 import pandas as pd
 from mongoDBOperations import MongoDBManagement
-from FlipkratScrapping import FlipkratScrapper
+from FlipkartScrapping import FlipkartScrapper
 from selenium import webdriver
 from webdriver_manager.chrome import ChromeDriverManager
 
 rows = {}
 collection_name = None
 
-logger = getLog('flipkrat.py')
+logger = getLog('flipkart.py')
 
 free_status = True
 db_name = 'Flipkart-Scrapper'
@@ -66,7 +66,7 @@ def index():
         expected_review = int(request.form['expected_review'])
         try:
             review_count = 0
-            scrapper_object = FlipkratScrapper(executable_path=ChromeDriverManager().install(),
+            scrapper_object = FlipkartScrapper(executable_path=ChromeDriverManager().install(),
                                                chrome_options=chrome_options)
             mongoClient = MongoDBManagement(username='shayalvaghasiya', password='shayalvaghasiya')
             scrapper_object.openUrl("https://www.flipkart.com/")
@@ -108,7 +108,7 @@ def feedback():
     try:
         global collection_name
         if collection_name is not None:
-            scrapper_object = FlipkratScrapper(executable_path=ChromeDriverManager().install(),
+            scrapper_object = FlipkartScrapper(executable_path=ChromeDriverManager().install(),
                                                chrome_options=chrome_options)
             mongoClient = MongoDBManagement(username='shayalvaghasiya', password='shayalvaghasiya')
             rows = mongoClient.findAllRecords(db_name="Flipkart-Scrapper", collection_name=collection_name)
