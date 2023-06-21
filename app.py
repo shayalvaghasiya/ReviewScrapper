@@ -86,19 +86,19 @@ def index():
                     scrapper_object.saveDataFrameToFile(file_name="static/scrapper_data.csv",
                                                         dataframe=pd.DataFrame(result))
                     logger.info("Data saved in scrapper file")
-                    scrapper_object.close_tab()
+                    # scrapper_object.close_tab()
                     return render_template('results.html', rows=result)  # show the results to user
                 else:
                     review_count = len(reviews)
                     threadClass(expected_review=expected_review, searchString=searchString,
                                 scrapper_object=scrapper_object, review_count=review_count)
                     logger.info("data saved in scrapper file")
-                    scrapper_object.close_tab()
+                    # scrapper_object.close_tab()
                     return redirect(url_for('feedback'))
             else:
                 threadClass(expected_review=expected_review, searchString=searchString, scrapper_object=scrapper_object,
                             review_count=review_count)
-                scrapper_object.close_tab()
+                # scrapper_object.close_tab()
                 return redirect(url_for('feedback'))
 
         except Exception as e:

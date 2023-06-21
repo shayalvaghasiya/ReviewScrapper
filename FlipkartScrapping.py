@@ -25,8 +25,9 @@ class FlipkartScrapper:
         except Exception as e:
             raise Exception(f"(__init__): Something went wrong on initializing the webdriver object.\n" + str(e))
 
-    def close_tab(self):
-        self.driver.close()
+    # def close_tab(self):
+    #     self.driver.close()
+    #     self.driver.quit()
 
     def waitExplicitlyForCondition(self, element_to_be_found):
         """
